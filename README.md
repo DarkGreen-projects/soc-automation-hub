@@ -45,7 +45,6 @@ npm run tauri:dev    # app desktop (richiede Rust)
 ## Dati e sicurezza
 
 - Usa solo CSV di esempio o dati anonimizzati nei report pubblici.
-- Non inserire chiavi API, log reali o path interni nei commit.
 - I file di configurazione locale (chiavi VT) restano solo sulla macchina dell'utente e sono esclusi da git.
 
 ## Licenza
