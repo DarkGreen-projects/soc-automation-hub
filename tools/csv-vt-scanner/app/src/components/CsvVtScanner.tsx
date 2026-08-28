@@ -19,7 +19,6 @@ import {
 import type { ScanCategory, ScanRowResult } from "@/lib/csvVt/types";
 import {
   clearCsvVtCheckpoint,
-  getDataDirectory,
   importVtKeysFromFile,
   isTauri,
   loadCsvVtCheckpoint,
@@ -131,7 +130,6 @@ export function CsvVtScanner({ onBusyStatus }: CsvVtScannerProps) {
     abuseConfigured: false,
   });
   const [pool, setPool] = useState<VtKeyPoolStatus>({ total: 0, active: 0, cooled: 0 });
-  const [dataDir, setDataDir] = useState("");
   const [vtInput, setVtInput] = useState("");
   const [keysMsg, setKeysMsg] = useState("");
   const [exportMsg, setExportMsg] = useState("");
@@ -179,7 +177,6 @@ export function CsvVtScanner({ onBusyStatus }: CsvVtScannerProps) {
     void (async () => {
       const status = await loadOsintKeys();
       setKeys(status);
-      setDataDir(await getDataDirectory());
       if (isTauri()) {
         setPool(await loadVtKeyPoolStatus());
       }
@@ -307,7 +304,7 @@ export function CsvVtScanner({ onBusyStatus }: CsvVtScannerProps) {
     setKeys(status);
     setVtInput("");
     setKeysMsg(
-      `${status.vtKeyCount} chiav${status.vtKeyCount === 1 ? "e" : "i"} salvate in osint-keys.json.`,
+      `${status.vtKeyCount} chiav${status.vtKeyCount === 1 ? "e" : "i"} salvate localmente.`,
     );
     await refreshPool();
   };
@@ -325,7 +322,7 @@ export function CsvVtScanner({ onBusyStatus }: CsvVtScannerProps) {
     setKeys(status);
     setVtInput("");
     setKeysMsg(
-      `Aggiunte. Totale: ${status.vtKeyCount} chiav${status.vtKeyCount === 1 ? "e" : "i"} in osint-keys.json.`,
+      `Aggiunte. Totale: ${status.vtKeyCount} chiav${status.vtKeyCount === 1 ? "e" : "i"} salvate localmente.`,
     );
     await refreshPool();
   };
@@ -680,16 +677,16 @@ export function CsvVtScanner({ onBusyStatus }: CsvVtScannerProps) {
           </div>
           <p className="decoder-keys-msg">
             {keys.vtKeyCount > 0
-              ? `${keys.vtKeyCount} chiav${keys.vtKeyCount === 1 ? "e" : "i"} già salvate`
-              : "Nessuna chiave salvata"}
-            {dataDir ? ` in ${dataDir}\\osint-keys.json` : " in osint-keys.json"}. Non serve
-            reincollarle a ogni avvio: importa un .txt o aggiungi sotto.
+              ? `${keys.vtKeyCount} chiav${keys.vtKeyCount === 1 ? "e" : "i"} configurate`
+              : "Nessuna chiave configurata"}
+            . Le credenziali restano solo su questo dispositivo (cartella dati dell&apos;app).
+            Importa un file .txt o aggiungi le chiavi sotto.
           </p>
           <div className="decoder-key-row">
             <span>Aggiungi key (una per riga) oppure importa da file</span>
             <textarea
               className="csvvt-keys-textarea"
-              placeholder={"vt-key-1\nvt-key-2\nvt-key-3"}
+              placeholder="Incolla una chiave API per riga"
               value={vtInput}
               onChange={(e) => setVtInput(e.target.value)}
               disabled={!isTauri()}

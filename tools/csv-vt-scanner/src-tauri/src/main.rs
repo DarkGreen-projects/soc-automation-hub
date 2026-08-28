@@ -1,3 +1,3 @@
 fn main() {
-    logpoint_query_assistant_lib::run();
+    csv_vt_scanner_lib::run();
 }

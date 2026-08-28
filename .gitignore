@@ -7,7 +7,9 @@ tools/csv-vt-scanner/src-tauri/target/
 .env
 .env.*
 **/osint-keys.json
-**/csv-vt-checkpoint.json
+**/vt-credentials.json
+**/credentials*.json
+**/*-checkpoint.json
 data/
 .DS_Store
 Thumbs.db

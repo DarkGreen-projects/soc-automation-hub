@@ -33,7 +33,7 @@ fn vt_key_cooldown() -> &'static Mutex<HashMap<String, Instant>> {
 fn http_client() -> &'static reqwest::Client {
     HTTP.get_or_init(|| {
         reqwest::Client::builder()
-            .user_agent("logpoint-query-assistant/1.0")
+            .user_agent("csv-vt-scanner/1.0")
             .connect_timeout(Duration::from_secs(8))
             .timeout(Duration::from_secs(15))
             .pool_max_idle_per_host(4)

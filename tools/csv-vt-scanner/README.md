@@ -1,66 +1,95 @@
 # CSV VT Scanner
 
-Verifica indirizzi IP esportati da LogPoint/Guardsix tramite **VirusTotal**, con grafico a torta delle percentuali e export CSV degli IP malevoli.
+Tool per analizzare liste di indirizzi IP esportate da un SIEM (es. export CSV LogPoint) e verificarne la reputazione tramite VirusTotal.
 
-Parte del [SOC Automation Hub](https://github.com/DarkGreen-projects/soc-automation-hub).
+## Cosa fa
 
-## Demo web
+1. **Legge** un file CSV con IP pubblici (e metadati opzionali: paese, conteggio, tipo evento)
+2. **Classifica** ogni IP: malevolo, pulito, non trovato, errore, saltato (privato/invalido)
+3. **Mostra** statistiche con grafico a torta e percentuali
+4. **Esporta** un CSV con solo gli IP malevoli o con tutti i risultati
 
-https://darkgreen-projects.github.io/soc-automation-hub/
+## Demo web vs app desktop
 
-La demo web permette:
-- upload CSV LogPoint (`ip,country,count,event_type`)
-- **Anteprima demo** con classificazione simulata
-- grafico a torta e percentuali
-- export CSV (download browser)
+| Funzione | Demo web | App desktop |
+|----------|----------|-------------|
+| Upload CSV | Sì | Sì |
+| Grafico a torta | Sì | Sì |
+| Export CSV | Sì (download browser) | Sì (dialog Salva con nome) |
+| Scan VirusTotal reale | No | Sì |
+| Più chiavi API in parallelo | No | Sì |
+| Checkpoint / ripresa scan | No | Sì |
 
-## App desktop (VirusTotal reale)
+- **Demo:** https://darkgreen-projects.github.io/soc-automation-hub/
+- **Desktop:** [GitHub Releases](https://github.com/DarkGreen-projects/soc-automation-hub/releases)
 
-Scarica l'ultima release Windows: [GitHub Releases](https://github.com/DarkGreen-projects/soc-automation-hub/releases)
+La demo usa una **classificazione simulata** (nessuna chiamata esterna, nessuna chiave richiesta).
 
-Funzionalità desktop aggiuntive:
-- scan VirusTotal reale
-- **multi-API key** con parallelismo (~15s per chiave)
-- checkpoint e ripresa scan
-- export con dialog Salva con nome
+## Utilizzo — demo web
 
-### Avvio sviluppo desktop
+1. Apri la demo nel browser
+2. Clicca **Carica CSV** e seleziona il file
+3. Verifica il riepilogo (IP unici, quanti verranno analizzati, quanti saltati)
+4. Clicca **Anteprima demo**
+5. Consulta grafico e tabella
+6. Usa **Esporta malevoli** o **Esporta tutti i risultati**
 
-```powershell
-cd tools/csv-vt-scanner
-npm ci
-npm run tauri:dev
+## Utilizzo — app desktop
+
+1. Scarica e avvia `csv-vt-scanner.exe` dalla release (cartella portable completa)
+2. Nella sezione **API VirusTotal**, incolla una o più chiavi (una per riga) oppure importa da file `.txt`
+3. Clicca **Salva elenco** o **Aggiungi a esistenti**
+4. Carica il CSV e clicca **Avvia scan VT**
+5. Per file grandi: aggiungi più chiavi API per ridurre i tempi (~15 secondi per richiesta per chiave)
+6. Se interrompi lo scan, usa **Continua** per riprendere dagli IP ancora in coda
+
+Le chiavi vengono salvate **solo in locale** nella cartella `data/` accanto all'eseguibile. Non vengono inviate al repository né alla demo web.
+
+## Formato CSV
+
+Colonne tipiche (header opzionale):
+
+```csv
+ip,country,count,event_type
+8.8.8.8,United States,100,dns
+203.0.113.50,Documentation,7,scan
+192.168.1.1,Internal,50,local
 ```
 
-Richiede Node.js 20+ e [Rust](https://rustup.rs/).
+Regole di parsing:
 
-### Build portable
+- Ogni **IPv4** presente nella riga viene estratto (anche in righe di testo libero)
+- IP **duplicati** vengono ignorati (resta la prima occorrenza)
+- IP **privati o riservati** (RFC1918, loopback, ecc.) sono marcati come saltati
+- La verifica VT parte dal **fondo del file** verso l'alto
+
+File di esempio: [../../examples/sample-logpoint-ips.csv](../../examples/sample-logpoint-ips.csv)
+
+## Output export
+
+Il CSV esportato include, per ogni IP:
+
+`ip`, `country`, `count`, `event_type`, `category`, `vt_malicious`, `vt_total`, `vt_ratio`, `vt_permalink`, `error`
+
+## Sviluppo
+
+```powershell
+npm ci
+npm test
+npm run dev          # http://localhost:1421
+npm run tauri:dev    # desktop + hot reload
+```
+
+Build portable Windows:
 
 ```powershell
 .\scripts\build-portable.ps1
 ```
 
-Output in `dist/CsvVtScanner/`.
-
-## Formato CSV
-
-Esempio export LogPoint:
-
-```csv
-ip,country,count,event_type
-8.8.8.8,United States,100,dns
-192.168.1.1,Internal,50,server-rst
-```
-
-Gli IP privati vengono saltati automaticamente.
-
-## Test
-
-```powershell
-npm test
-```
+Requisiti: Node.js 20+, Rust ([rustup](https://rustup.rs/)) per la build desktop.
 
 ## Sicurezza
 
-- Non committare `osint-keys.json` o file con API key
-- Usa solo dati di esempio nei repository pubblici
+- Non committare file con chiavi API o log di produzione
+- Non condividere export CSV che contengono dati aziendali reali
+- Ruota le chiavi VirusTotal se sospetti esposizione accidentale

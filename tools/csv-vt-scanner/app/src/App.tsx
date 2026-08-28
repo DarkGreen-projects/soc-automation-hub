@@ -6,7 +6,7 @@ export default function App() {
       <header className="app-header">
         <div>
           <h1>CSV VT Scanner</h1>
-          <p className="app-subtitle">SOC Automation Hub — verifica IP da export LogPoint</p>
+          <p className="app-subtitle">Verifica IP da export CSV — modulo SOC Automation Hub</p>
         </div>
         <a
           className="header-link"

@@ -1,49 +1,52 @@
 # SOC Automation Hub
 
-[![Focus](https://img.shields.io/badge/Focus-Security%20Automation-3ddc97)]()
-[![Location](https://img.shields.io/badge/Location-Torino%2C%20IT-green)]()
+Repository di tool per automazione SOC. Ogni modulo in `tools/` è indipendente, con documentazione, test e (dove previsto) demo web o build desktop.
 
-**Portfolio open source di progetti Security, automazione SOC e integrazioni cloud.**
+## Moduli disponibili
 
-Creato da **Federico Parisi** ([DarkGreen Projects](https://github.com/DarkGreen-projects)) — SOC Analyst con background da sviluppatore, specializzato in detection, automazione e AI-assisted workflows.
+### [csv-vt-scanner](tools/csv-vt-scanner/)
 
-## Mission
+Analizza export CSV di indirizzi IP (formato SIEM/LogPoint), classifica gli IP e produce statistiche con grafico a torta ed export CSV.
 
-Costruire strumenti che collegano:
+| Modalità | URL / percorso | Cosa fa |
+|----------|----------------|---------|
+| **Demo web** | [darkgreen-projects.github.io/soc-automation-hub](https://darkgreen-projects.github.io/soc-automation-hub/) | Upload CSV, anteprima con classificazione simulata, export |
+| **Desktop** | [Releases](https://github.com/DarkGreen-projects/soc-automation-hub/releases) | Scan VirusTotal reale, più chiavi API, checkpoint |
 
-`Detection` → `Enrichment` → `Automazione` → `Risposta`
+Guida completa: [tools/csv-vt-scanner/README.md](tools/csv-vt-scanner/README.md)
 
-## Demo live
+## Avvio rapido (demo web)
 
-- **CSV VT Scanner (web demo):** https://darkgreen-projects.github.io/soc-automation-hub/
-- **App Windows (scan VirusTotal reale):** [Releases](https://github.com/DarkGreen-projects/soc-automation-hub/releases)
+1. Apri la [demo](https://darkgreen-projects.github.io/soc-automation-hub/)
+2. Carica un CSV (es. [examples/sample-logpoint-ips.csv](examples/sample-logpoint-ips.csv))
+3. Clicca **Anteprima demo**
+4. Esporta gli IP malevoli o il report completo
 
-## Progetti
-
-| Tool | Stato | Descrizione |
-|------|-------|-------------|
-| [csv-vt-scanner](tools/csv-vt-scanner/) | Attivo | Verifica IP da export LogPoint via VirusTotal, grafico a torta, export CSV malevoli |
-| splunk-detections | Prossimo | Regole SPL + dati sintetici |
-| power-platform-soc | Prossimo | Template Power Automate / Logic Apps per SOC |
-| ai-alert-triage | Prossimo | LLM per summarization e classificazione alert |
-
-## Stack
-
-`Python` · `React` · `Tauri` · `Power Automate` · `Logic Apps` · `SIEM` · `Splunk` · `NIST CSF`
-
-## Struttura
+## Struttura repository
 
 ```
 soc-automation-hub/
-├── tools/           # Moduli standalone
-├── docs/            # Architettura e roadmap
-├── examples/        # Dati di esempio (sanitizzati)
-└── .github/         # CI: Pages + Release Windows
+├── tools/csv-vt-scanner/   # Modulo CSV → VirusTotal
+├── examples/               # CSV di esempio (dati fittizi)
+├── docs/architecture.md    # Architettura tecnica
+└── .github/workflows/      # Deploy Pages e release Windows
 ```
 
-## Policy
+## Sviluppo locale
 
-I progetti aziendali non vengono pubblicati. Qui trovi solo codice open source, template e versioni **sanitizzate/demo**.
+```powershell
+cd tools/csv-vt-scanner
+npm ci
+npm test
+npm run dev          # demo web in locale
+npm run tauri:dev    # app desktop (richiede Rust)
+```
+
+## Dati e sicurezza
+
+- Usa solo CSV di esempio o dati anonimizzati nei report pubblici.
+- Non inserire chiavi API, log reali o path interni nei commit.
+- I file di configurazione locale (chiavi VT) restano solo sulla macchina dell'utente e sono esclusi da git.
 
 ## Licenza
 

@@ -1,12 +1,12 @@
 [package]
-name = "logpoint-query-assistant"
+name = "csv-vt-scanner"
 version = "1.0.0"
-description = "Portable assistant for writing LogPoint/Guardsix queries"
-authors = ["Guardsix"]
+description = "CSV IP scanner with VirusTotal integration"
+authors = ["DarkGreen Projects"]
 edition = "2021"
 
 [lib]
-name = "logpoint_query_assistant_lib"
+name = "csv_vt_scanner_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
