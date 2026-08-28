@@ -50,4 +50,4 @@ npm run tauri:dev    # app desktop (richiede Rust)
 
 ## Licenza
 
-MIT — vedi [LICENSE](LICENSE).
+MIT vedi [LICENSE](LICENSE).
