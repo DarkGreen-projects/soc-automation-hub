@@ -25,6 +25,17 @@ Tool per analizzare liste di indirizzi IP esportate da un SIEM (es. export CSV L
 
 La demo usa una **classificazione simulata** (nessuna chiamata esterna, nessuna chiave richiesta).
 
+## Alert Rule Planner (demo web)
+
+Modulo nel tab omonimo della demo: confronta le **tecniche MITRE** già coperte dalle tue alert rule con gli eventi degli ultimi giorni.
+
+1. Incolla l'inventario tecniche (es. `Brute Force – T1110.001`) e clicca **Applica tecniche**
+2. Carica un export SIEM in **CSV** (con header) o **JSON** (array di eventi, oppure oggetto con chiave `records`, `rows`, `events` o `alerts`)
+3. Clicca **Analizza coverage**
+4. Filtra per **Gap** / **Coperti** / **Blind** e usa **Copia pack rule** (query, intervallo, throttle, template Jinja)
+
+File di esempio: [../../examples/sample-alert-events.json](../../examples/sample-alert-events.json) e [../../examples/sample-alert-events.csv](../../examples/sample-alert-events.csv)
+
 ## Utilizzo — demo web
 
 1. Apri la demo nel browser

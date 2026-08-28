@@ -1,0 +1,24 @@
+{
+  "covered": [
+    { "id": "T1562.006", "name": "Impair Defenses: Indicator Blocking", "severity": "high" },
+    { "id": "T1562.001", "name": "Impair Defenses: Disable or Modify Tools", "severity": "high" },
+    { "id": "T1071.001", "name": "Application Layer Protocol: Web Protocols", "severity": "medium" },
+    { "id": "T1071", "name": "Application Layer Protocol", "severity": "medium" },
+    { "id": "T1190", "name": "Exploit Public-Facing Application", "severity": "critical" },
+    { "id": "T1036", "name": "Masquerading", "severity": "medium" },
+    { "id": "T1489", "name": "Service Stop", "severity": "high" },
+    { "id": "T1110.001", "name": "Brute Force: Password Guessing", "severity": "high" },
+    { "id": "T1110", "name": "Brute Force", "severity": "high" },
+    { "id": "T1070.001", "name": "Indicator Removal: Clear Windows Event Logs", "severity": "high" },
+    { "id": "T1547", "name": "Boot or Logon Autostart Execution", "severity": "high" },
+    { "id": "T1204.001", "name": "User Execution: Malicious Link", "severity": "high" },
+    { "id": "T1204", "name": "User Execution", "severity": "high" },
+    { "id": "T1136.001", "name": "Create Account: Local Account", "severity": "high" },
+    { "id": "T1189", "name": "Drive-by Compromise", "severity": "high" },
+    { "id": "T1090", "name": "Proxy", "severity": "medium" },
+    { "id": "T1219", "name": "Remote Access Software", "severity": "high" },
+    { "id": "T1046", "name": "Network Service Discovery", "severity": "medium" },
+    { "id": "T1486", "name": "Data Encrypted for Impact", "severity": "critical" }
+  ],
+  "notes": "Inventario tecniche MITRE già coperte dalle alert rule. Aggiorna dopo ogni nuova rule su LogPoint."
+}

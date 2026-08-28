@@ -1,0 +1,3 @@
+source_address,action,sub_category,event_category,norm_id,log_severity,log_ts
+203.0.113.50,pass,ips,utm,FortiOS,high,2026-08-28T10:15:00Z
+198.51.100.22,blocked,virus,utm,FortiOS,medium,2026-08-28T12:30:00Z

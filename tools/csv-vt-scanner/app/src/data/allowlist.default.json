@@ -1,0 +1,15 @@
+{
+  "attacks": [
+    "Censys.io.Scanner",
+    "Shodan.io.Scanner",
+    "ZoomEye.Scanner"
+  ],
+  "applications": [
+    "Tailscale",
+    "Firefox.Update"
+  ],
+  "webfilterCategoriesExclude": [
+    "Proxy Avoidance"
+  ],
+  "notes": "Esclusioni tipiche per ridurre rumore UTM/IPS nei template query."
+}

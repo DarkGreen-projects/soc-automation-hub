@@ -11,5 +11,7 @@ tools/csv-vt-scanner/src-tauri/target/
 **/credentials*.json
 **/*-checkpoint.json
 data/
+!tools/csv-vt-scanner/app/src/data/
+!tools/csv-vt-scanner/app/src/data/**
 .DS_Store
 Thumbs.db
