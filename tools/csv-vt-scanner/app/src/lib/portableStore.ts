@@ -165,3 +165,48 @@ export async function loadVtKeyPoolStatus(): Promise<VtKeyPoolStatus> {
     return { total: 0, active: 0, cooled: 0 };
   }
 }
+
+const BROWSER_BULK_OSINT_CHECKPOINT = "soc-hub-bulk-osint-checkpoint";
+
+export interface BulkOsintCheckpoint {
+  fileName: string;
+  parseInfo: string;
+  results: unknown[];
+  savedAt: string;
+}
+
+export async function saveBulkOsintCheckpoint(data: BulkOsintCheckpoint): Promise<void> {
+  const json = JSON.stringify(data);
+  if (isTauri()) {
+    await invokeStorage("save_bulk_osint_checkpoint", json);
+    return;
+  }
+  localStorage.setItem(BROWSER_BULK_OSINT_CHECKPOINT, json);
+}
+
+export async function loadBulkOsintCheckpoint(): Promise<BulkOsintCheckpoint | null> {
+  if (isTauri()) {
+    try {
+      const raw = await invokeStorage<string | null>("load_bulk_osint_checkpoint");
+      if (!raw) return null;
+      return JSON.parse(raw) as BulkOsintCheckpoint;
+    } catch {
+      return null;
+    }
+  }
+  try {
+    const raw = localStorage.getItem(BROWSER_BULK_OSINT_CHECKPOINT);
+    if (!raw) return null;
+    return JSON.parse(raw) as BulkOsintCheckpoint;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearBulkOsintCheckpoint(): Promise<void> {
+  if (isTauri()) {
+    await invokeStorage("clear_bulk_osint_checkpoint");
+    return;
+  }
+  localStorage.removeItem(BROWSER_BULK_OSINT_CHECKPOINT);
+}

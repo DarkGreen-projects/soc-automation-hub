@@ -16,6 +16,24 @@ export function getDefaultAllowlist(): Allowlist {
   };
 }
 
+export function normalizeAllowlist(raw: unknown): Allowlist {
+  const base = getDefaultAllowlist();
+  if (!raw || typeof raw !== "object") return base;
+  const obj = raw as Record<string, unknown>;
+  return {
+    attacks: Array.isArray(obj.attacks)
+      ? obj.attacks.map(String).map((s) => s.trim()).filter(Boolean)
+      : base.attacks,
+    applications: Array.isArray(obj.applications)
+      ? obj.applications.map(String).map((s) => s.trim()).filter(Boolean)
+      : base.applications,
+    webfilterCategoriesExclude: Array.isArray(obj.webfilterCategoriesExclude)
+      ? obj.webfilterCategoriesExclude.map(String).map((s) => s.trim()).filter(Boolean)
+      : base.webfilterCategoriesExclude,
+    notes: typeof obj.notes === "string" ? obj.notes : base.notes,
+  };
+}
+
 function quoteList(values: string[]): string {
   return values.map((v) => `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`).join(", ");
 }
@@ -47,4 +65,8 @@ export function applyAllowlistToQuery(query: string, list: Allowlist): string {
   const head = q.slice(0, pipe).trimEnd();
   const tail = q.slice(pipe);
   return `${head} ${additions.join(" ")}${tail.startsWith(" ") ? "" : " "}${tail}`;
+}
+
+export function allowlistToJson(list: Allowlist): string {
+  return JSON.stringify(list, null, 2);
 }

@@ -2,8 +2,7 @@
 
 ## Struttura hub
 
-Ogni tool in `tools/` è un progetto autonomo con propri `package.json`, test e README.  
-La **demo web** (GitHub Pages) espone più moduli in un'unica SPA React con tab di navigazione.
+Un package React/Vite in `tools/csv-vt-scanner/` espone **5 moduli demo** via tab in `App.tsx`. L'app desktop Tauri condivide la stessa UI con scan VT/OSINT reali.
 
 ```mermaid
 flowchart TB
@@ -11,68 +10,59 @@ flowchart TB
     Tabs[Tab navigazione]
     VT[CSV VT Scanner]
     ARP[Alert Rule Planner]
+    DEC[SIEM Decoder]
+    PIV[CSV Pivot]
+    BIO[Bulk IOC]
   end
   subgraph input [Input]
-    CsvIp[CSV IP export SIEM]
-    CsvAlert[CSV / JSON alert export]
-    Tech[Tecniche MITRE coperte]
-  end
-  subgraph output [Output]
-    Chart[Pie chart + export IP]
-    Rules[Gap analysis + pack rule]
+    CsvIp[CSV IP]
+    Tech[Tecniche MITRE]
+    CsvAlert[CSV/JSON alert]
+    SiemLog[Log SIEM / IOC]
+    CsvExport[CSV search export]
+    IocList[Lista IOC]
   end
   Tabs --> VT
   Tabs --> ARP
-  CsvIp --> VT --> Chart
+  Tabs --> DEC
+  Tabs --> PIV
+  Tabs --> BIO
+  CsvIp --> VT
   Tech --> ARP
-  CsvAlert --> ARP --> Rules
+  CsvAlert --> ARP
+  SiemLog --> DEC
+  CsvExport --> PIV
+  IocList --> BIO
+  DEC -->|sessionStorage| BIO
 ```
 
-## csv-vt-scanner — layer
+## Layer
 
 | Layer | Stack | Responsabilità |
 |-------|-------|----------------|
-| UI | React, Vite | Tab hub, upload, tabelle, grafico SVG, export |
-| Logica VT | TypeScript | Parse CSV IP, stats, orchestrazione scan |
-| Logica coverage | TypeScript | Parse tecniche MITRE, CSV/JSON alert, gap analysis, template rule |
-| Desktop | Tauri 2, Rust | Chiamate VirusTotal, storage locale, dialog file |
-| Demo web | GitHub Pages | Classificazione VT simulata + Alert Rule Planner (solo browser) |
+| UI | React, Vite | Tab hub, upload, tabelle, grafici, export |
+| VT / IOC | TypeScript | Parse CSV IP, bulk IOC, demoScan / Tauri VT |
+| Coverage | TypeScript | MITRE, gap analysis, rule templates |
+| Decoder | TypeScript | Multi-vendor parse, hunt pack, case report |
+| CSV LP | TypeScript | Parse export, aggregate, pivot queries |
+| Desktop | Tauri 2, Rust | VT API, checkpoint, file dialog |
 
-## Flusso scan (desktop)
+## Flussi demo web
 
-1. L'utente configura le chiavi VT nell'app (storage locale in `data/` accanto all'eseguibile)
-2. Il frontend invoca `vt_lookup` via Tauri per ogni IP pubblico
-3. Il backend Rust applica throttle per chiave (~15s) e failover su chiavi multiple
-4. I risultati vengono aggregati; checkpoint salvato ogni N IP
-5. Export tramite dialog nativo o download (web)
+- **CSV VT / Bulk IOC:** classificazione simulata (`demoScan.ts`) — nessuna rete
+- **Alert Planner:** parse CSV/JSON alert + MITRE inventory (`localStorage`)
+- **SIEM Decoder:** estrazione locale + permalinks OSINT; opzionale bridge → Bulk IOC
+- **CSV Pivot:** statistiche e query pivot con allowlist default
 
-## Flusso demo — CSV VT Scanner (web)
+## Flusso desktop
 
-1. Parse CSV lato browser
-2. `runDemoScan` classifica gli IP con regole deterministiche (nessuna API)
-3. Statistiche ed export come nel desktop
-
-## Flusso demo — Alert Rule Planner (web)
-
-1. L'operatore incolla l'inventario tecniche MITRE coperte (`parseTechniquesFromText`)
-2. Carica export alert in CSV o JSON (`parseAlertsInput` → stessa tabella normalizzata del parser LogPoint)
-3. `analyzeCoverage` mappa segnali osservati → tecniche (`signalMap`), rileva vendor (`vendors`)
-4. Per ogni tecnica: stato **gap** / **covered** / **blind**; sui gap genera pack rule (`ruleTemplates`: query, intervallo, throttle, Jinja, `copyBlock`)
-5. Preferenze tecniche salvate in `localStorage` del browser (nessun backend)
-
-### Moduli alert coverage
-
-| File | Ruolo |
-|------|-------|
-| `parseTechniques.ts` | Parsing elenco MITRE, merge con seed |
-| `parseAlertsInput.ts` | CSV o JSON (array / wrapper `events`, `records`, …) |
-| `parseExport.ts` | Parser CSV export SIEM |
-| `signalMap.ts` | Regole segnale → tecnica |
-| `analyzeCoverage.ts` | Orchestrazione gap / covered / blind |
-| `ruleTemplates.ts` | Pack rule LogPoint-ready (prefisso `AR-`) |
-| `allowlist.ts` | Esclusioni rumore nelle query |
+Chiavi VT in `data/` accanto all'eseguibile → `vt_lookup` Rust → checkpoint JSON per CSV VT e Bulk IOC.
 
 ## CI/CD
 
-- **pages.yml** — build Vite con `base: /soc-automation-hub/` e deploy su GitHub Pages
-- **release.yml** — build Tauri su `windows-latest`, artifact zip portable
+- **pages.yml** — build Vite `base: /soc-automation-hub/` → GitHub Pages
+- **release.yml** — Tauri portable Windows
+
+## Test
+
+~70 test Vitest in `tests/lib/` — parser, decoder, coverage, allowlist, bulk IOC.

@@ -36,6 +36,42 @@ Modulo nel tab omonimo della demo: confronta le **tecniche MITRE** già coperte 
 
 File di esempio: [../../examples/sample-alert-events.json](../../examples/sample-alert-events.json) e [../../examples/sample-alert-events.csv](../../examples/sample-alert-events.csv)
 
+## SIEM Decoder (demo web)
+
+Tab **SIEM Decoder**: incolla JSON Cynet/Defender, syslog FortiGate o lista IOC.
+
+1. **Analizza** → tabella artefatti (IP, hash, domain, …) con link VT/AbuseIP
+2. **Copia query** / **Copia report** / export Markdown
+3. **Hunt query pack** — query suggerite per approfondire l'incidente
+4. **Invia IOC a Bulk scan** — passa gli IOC pubblici al tab Bulk IOC
+
+Esempio: [../../examples/sample-siem-cynet.json](../../examples/sample-siem-cynet.json)
+
+Per OSINT Python multi-fonte (VT, AbuseIPDB, OTX, URLhaus): [Decoder_SIEMjoson](https://github.com/DarkGreen-projects/Decoder_SIEMjoson)
+
+## CSV Pivot Analyzer (demo web)
+
+Tab **CSV Pivot**: analizza export CSV da SIEM Search.
+
+1. Carica CSV con header (es. `source_address`, `log_ts`, …)
+2. Scegli colonna → **top valori** e **bucket temporali**
+3. **Copia query** pivot con allowlist anti-rumore
+
+Esempio: [../../examples/sample-logpoint-export.csv](../../examples/sample-logpoint-export.csv)
+
+## Bulk IOC Scanner (demo web / desktop)
+
+Tab **Bulk IOC**: IP, hash, domain, URL — uno per riga.
+
+| Funzione | Demo web | Desktop |
+|----------|----------|---------|
+| Parse lista | Sì | Sì |
+| Classificazione VT | Simulata | Reale |
+| Checkpoint | No | Sì |
+| Export CSV | Sì | Sì |
+
+Esempio: [../../examples/sample-ioc-list.txt](../../examples/sample-ioc-list.txt)
+
 ## Utilizzo — demo web
 
 1. Apri la demo nel browser

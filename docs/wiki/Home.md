@@ -1,29 +1,25 @@
 # SOC Automation Hub — Wiki
 
-Repository: [github.com/DarkGreen-projects/soc-automation-hub](https://github.com/DarkGreen-projects/soc-automation-hub)
-
 **Demo live:** [darkgreen-projects.github.io/soc-automation-hub](https://darkgreen-projects.github.io/soc-automation-hub/)
 
-Hub di tool per automazione SOC. Ogni modulo in `tools/` ha README, test e (dove previsto) demo web o build desktop.
+Parte del portfolio [DarkGreen Projects](https://github.com/DarkGreen-projects).
 
 ## Moduli demo web
 
-| Modulo | Descrizione | Doc |
-|--------|-------------|-----|
-| [CSV VT Scanner](CSV-VT-Scanner) | Enrichment IP da export CSV SIEM (demo simulata) | [README tool](../tools/csv-vt-scanner/README.md) |
-| [Alert Rule Planner](Alert-Rule-Planner) | Coverage MITRE + pack alert rule da export CSV/JSON | [README tool](../tools/csv-vt-scanner/README.md#alert-rule-planner-demo-web) |
+| Modulo | Descrizione |
+|--------|-------------|
+| [CSV VT Scanner](CSV-VT-Scanner) | Enrichment IP da CSV SIEM (demo simulata) |
+| [Alert Rule Planner](Alert-Rule-Planner) | Coverage MITRE + pack alert rule |
+| [SIEM Decoder](SIEM-Decoder) | Log grezzo → IOC + hunt pack + report |
+| [CSV Pivot Analyzer](CSV-Pivot-Analyzer) | Export CSV → top + query pivot |
+| [Bulk IOC Scanner](Bulk-IOC-Scanner) | Lista IOC → classificazione bulk |
 
-## Documentazione repository
+## Altri link
 
 - [README principale](https://github.com/DarkGreen-projects/soc-automation-hub#readme)
-- [Architettura tecnica](https://github.com/DarkGreen-projects/soc-automation-hub/blob/main/docs/architecture.md)
-- [Esempi CSV/JSON](https://github.com/DarkGreen-projects/soc-automation-hub/tree/main/examples)
+- [Architettura](https://github.com/DarkGreen-projects/soc-automation-hub/blob/main/docs/architecture.md)
+- [OSINT Python avanzato — Decoder_SIEMjoson](https://github.com/DarkGreen-projects/Decoder_SIEMjoson)
 
 ## Desktop
 
-Scan VirusTotal reale, multi-chiave e checkpoint: [GitHub Releases](https://github.com/DarkGreen-projects/soc-automation-hub/releases)
-
-## Note
-
-- Progetto open source sanitizzato — nessun dato aziendale reale
-- Parte del portfolio [DarkGreen Projects](https://github.com/DarkGreen-projects)
+[GitHub Releases](https://github.com/DarkGreen-projects/soc-automation-hub/releases) — VT reale, multi-chiave, checkpoint.

@@ -1,0 +1,5 @@
+source_address,user,action,log_ts,norm_id
+203.0.113.50,alice,blocked,2026-08-28T10:15:00Z,FortiOS
+203.0.113.50,bob,pass,2026-08-28T10:16:00Z,FortiOS
+198.51.100.22,carol,blocked,2026-08-28T11:02:00Z,FortiOS
+203.0.113.50,dave,blocked,2026-08-28T12:30:00Z,FortiOS
