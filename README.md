@@ -22,7 +22,7 @@ Analizza export CSV di indirizzi IP (formato SIEM/LogPoint), classifica gli IP e
 | **Demo web** | [darkgreen-projects.github.io/soc-automation-hub](https://darkgreen-projects.github.io/soc-automation-hub/) | CSV VT Scanner + Alert Rule Planner |
 | **Desktop** | [Releases](https://github.com/DarkGreen-projects/soc-automation-hub/releases) | Scan VirusTotal reale, più chiavi API, checkpoint |
 
-Guida completa: [tools/csv-vt-scanner/README.md](tools/csv-vt-scanner/README.md) · [Wiki](https://github.com/DarkGreen-projects/soc-automation-hub/wiki)
+Guida completa: [tools/csv-vt-scanner/README.md](tools/csv-vt-scanner/README.md) · [Documentazione moduli](docs/wiki/Home.md)
 
 ## Avvio rapido (demo web)
 
