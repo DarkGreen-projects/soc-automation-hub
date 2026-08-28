@@ -1,0 +1,13 @@
+ip,country,count,event_type
+8.8.8.8,United States,142,dns
+1.1.1.1,Australia,89,dns
+185.220.101.1,Germany,12,server-rst
+192.168.1.1,Internal,500,local
+10.0.0.15,Internal,44,local
+203.0.113.50,Documentation,7,scan
+198.51.100.22,Documentation,3,brute-force
+91.198.174.192,Netherlands,201,http
+45.33.32.156,United States,18,ssh
+172.16.0.99,Internal,2,local
+94.102.49.193,Netherlands,55,server-rst
+8.8.4.4,United States,76,dns

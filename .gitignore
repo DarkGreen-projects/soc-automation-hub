@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-web/
+tools/csv-vt-scanner/dist/
+tools/csv-vt-scanner/src-tauri/target/
+*.log
+.env
+.env.*
+**/osint-keys.json
+**/csv-vt-checkpoint.json
+data/
+.DS_Store
+Thumbs.db

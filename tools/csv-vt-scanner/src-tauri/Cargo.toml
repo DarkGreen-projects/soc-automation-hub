@@ -1,0 +1,30 @@
+[package]
+name = "logpoint-query-assistant"
+version = "1.0.0"
+description = "Portable assistant for writing LogPoint/Guardsix queries"
+authors = ["Guardsix"]
+edition = "2021"
+
+[lib]
+name = "logpoint_query_assistant_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+base64 = "0.22"
+tokio = { version = "1", features = ["time"] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

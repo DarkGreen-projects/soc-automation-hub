@@ -1,0 +1,33 @@
+{
+  "name": "csv-vt-scanner",
+  "private": true,
+  "version": "1.0.0",
+  "description": "CSV IP scanner with VirusTotal — SOC Automation Hub",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config app/vite.config.ts",
+    "build": "tsc -p app/tsconfig.json && cross-env GITHUB_PAGES=true vite build --config app/vite.config.ts",
+    "build:local": "tsc -p app/tsconfig.json && vite build --config app/vite.config.ts",
+    "preview": "vite preview --config app/vite.config.ts",
+    "test": "vitest run --config app/vite.config.ts",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.2.0",
+    "@tauri-apps/plugin-fs": "^2.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.2.7",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^7.0.3",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5"
+  }
+}

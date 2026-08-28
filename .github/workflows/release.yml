@@ -1,0 +1,53 @@
+name: Release CSV VT Scanner (Windows)
+
+on:
+  push:
+    tags:
+      - "csv-vt-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: tools/csv-vt-scanner/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build portable
+        working-directory: tools/csv-vt-scanner
+        shell: pwsh
+        run: |
+          npm ci
+          .\scripts\build-portable.ps1
+
+      - name: Zip portable
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -eq "refs/heads/main" -or [string]::IsNullOrWhiteSpace($tag)) { $tag = "csv-vt-scanner-manual" }
+          $tag = $tag -replace '^refs/tags/', ''
+          Compress-Archive -Path tools/csv-vt-scanner/dist/CsvVtScanner/* -DestinationPath "csv-vt-scanner-windows-portable.zip" -Force
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: csv-vt-scanner-windows-portable.zip
+          generate_release_notes: true
+
+      - name: Upload artifact (manual)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: csv-vt-scanner-windows-portable
+          path: csv-vt-scanner-windows-portable.zip
