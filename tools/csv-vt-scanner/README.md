@@ -87,9 +87,3 @@ Build portable Windows:
 ```
 
 Requisiti: Node.js 20+, Rust ([rustup](https://rustup.rs/)) per la build desktop.
-
-## Sicurezza
-
-- Non committare file con chiavi API o log di produzione
-- Non condividere export CSV che contengono dati aziendali reali
-- Ruota le chiavi VirusTotal se sospetti esposizione accidentale
