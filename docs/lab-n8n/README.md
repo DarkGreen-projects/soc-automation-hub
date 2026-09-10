@@ -1,8 +1,8 @@
 # Lab n8n + Splunk (NUC)
 
-Repo dedicato: [soc-n8n-splunk-lab](https://github.com/DarkGreen-projects/soc-n8n-splunk-lab).
+Repository dedicato: [soc-n8n-splunk-lab](https://github.com/DarkGreen-projects/soc-n8n-splunk-lab).
 
-Qui sul NUC uso Splunk Free come SIEM e n8n per detection/triage/enrichment, perché sul Free non hai alert schedulate e il REST remoto non autentica. I workflow JSON sanitizzati stanno anche in [`workflows/`](workflows/).
+Laboratorio SOC su NUC: Splunk Free come SIEM e n8n come orchestration. Sulla Free non sono disponibili alert schedulate native e il login REST remoto è disabilitato; i workflow compensano con bridge file, triage open/closed ed enrichment IOC. Gli export JSON sanitizzati sono anche in [`workflows/`](workflows/).
 
 ```mermaid
 flowchart LR
@@ -22,7 +22,7 @@ flowchart LR
   Manual[webhook_reputation] --> Dispatcher
 ```
 
-## Sul lab
+## Esecuzione sul lab
 
 ```powershell
 C:\lab\lab-up.ps1
@@ -35,5 +35,5 @@ powershell -File C:\lab\scripts\splunk-warning-export.ps1
 - Splunk: http://localhost:8000 (`index=alerts_triage`)  
 - Report: `C:\lab\data\soc-reports\`
 
-Enrichment live: ip-api, Google DNS, CIRCL. Stub voluti: VT / Shodan / AbuseIPDB / MISP.  
-Pattern Dispatcher ispirato a [inthecyber securityonion-n8n-workflows](https://github.com/inthecyber-group/securityonion-n8n-workflows).
+Enrichment operativo: ip-api, Google DNS, CIRCL. Stub dichiarati: VirusTotal, Shodan, AbuseIPDB, MISP.  
+Riferimento di pattern: [inthecyber securityonion-n8n-workflows](https://github.com/inthecyber-group/securityonion-n8n-workflows).
