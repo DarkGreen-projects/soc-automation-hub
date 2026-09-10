@@ -1,0 +1,112 @@
+{
+  "name": "LAB - Manual Demo Pipeline",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs = require('fs');\nconst path = require('path');\nconst crypto = require('crypto');\nconst TRIAGE = '/data/alerts-triage';\nconst REPORTS = '/data/soc-reports';\nfs.mkdirSync(TRIAGE, { recursive: true });\nfs.mkdirSync(REPORTS, { recursive: true });\nconst stamp = new Date().toISOString().replace(/[:.]/g,'-');\nconst alert_id = `demo-${stamp.slice(0,19)}`;\nconst triage = {\n  alert_id,\n  status: 'open',\n  source_id: 41,\n  log_name: 'System',\n  level: 'Errore',\n  time_created: new Date().toISOString(),\n  message: 'Demo Kernel-Power unexpected shutdown. Related host 8.8.8.8 CVE-2021-44228',\n  opened_at: new Date().toISOString(),\n  closed_at: null,\n  owner: null,\n  iocs: { ip: '8.8.8.8', cve: 'CVE-2021-44228' }\n};\nfs.writeFileSync(path.join(TRIAGE, `open-${alert_id}.json`), JSON.stringify(triage));\nreturn [{ json: triage }];\n"
+      },
+      "id": "sample",
+      "name": "Create Sample Open",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=http://127.0.0.1:5678/webhook/lab-reputation?ip={{ $json.iocs.ip }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "enrich",
+      "name": "Call Dispatcher IP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -40,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs = require('fs');\nconst path = require('path');\nconst a = $('Create Sample Open').item.json;\nconst html = $json.data || $json;\nconst report = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>${a.alert_id}</title></head>\n<body style=\"font-family:sans-serif;background:#0f1419;color:#e7ecf3;padding:2rem\">\n<h1>Demo SOC Report</h1><p>${a.alert_id}</p><pre>${a.message}</pre><hr/>${html}</body></html>`;\nconst out = path.join('/data/soc-reports', `${a.alert_id}.html`);\nfs.writeFileSync(out, report);\nreturn [{ json: { ...a, report_path: out } }];\n"
+      },
+      "id": "report",
+      "name": "Write Demo Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create Sample Open",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sample Open": {
+      "main": [
+        [
+          {
+            "node": "Call Dispatcher IP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Dispatcher IP": {
+      "main": [
+        [
+          {
+            "node": "Write Demo Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "name": "lab-soc"
+    }
+  ],
+  "id": "2d4d68d0cd03be73",
+  "versionId": "90c46e09d91849c4"
+}

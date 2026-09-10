@@ -1,0 +1,64 @@
+{
+  "name": "LAB - Hash Reputation",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "hash"
+            }
+          ]
+        }
+      },
+      "id": "t1",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst hash = ($json.hash || '').toString().trim().toLowerCase();\nlet kind = 'unknown';\nif (/^[a-f0-9]{32}$/.test(hash)) kind = 'md5';\nelse if (/^[a-f0-9]{40}$/.test(hash)) kind = 'sha1';\nelse if (/^[a-f0-9]{64}$/.test(hash)) kind = 'sha256';\nconst valid = kind !== 'unknown';\nconst stub = { virustotal: { provider: 'stub (no API key)', malicious: 0, suspicious: 0, note: 'Stub VT \u2014 no paid/free key required for this demo.' } };\nconst html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Hash ${hash}</title>\n<style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;background:#0f1419;color:#e7ecf3}\nh1{color:#5eead4}.card{background:#1e293b;border-radius:8px;padding:1rem;margin:1rem 0}</style></head>\n<body><h1>LAB Hash Reputation</h1>\n<div class=\"card\"><p><strong>${hash}</strong></p><p>Type: ${kind} \u00b7 Valid format: ${valid}</p>\n<p>${stub.virustotal.note}</p><p>Demo score malicious=${stub.virustotal.malicious}</p></div>\n</body></html>`;\nreturn [{ json: { hash, kind, valid, stub, html, type: 'hash' } }];\n"
+      },
+      "id": "html",
+      "name": "Build Hash HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Build Hash HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "name": "lab-soc"
+    }
+  ],
+  "id": "7ed93d7206e46667",
+  "versionId": "235efe4e2cf69996"
+}

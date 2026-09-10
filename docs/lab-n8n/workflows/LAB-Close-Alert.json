@@ -1,0 +1,88 @@
+{
+  "name": "LAB - Close Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lab-close",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh",
+      "name": "Webhook Close",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        0
+      ],
+      "webhookId": "lab-close"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs = require('fs');\nconst path = require('path');\nconst body = $json.body || $json;\nconst alert_id = (body.alert_id || '').toString().trim();\nconst owner = (body.owner || 'demo').toString();\nif (!alert_id) {\n  return [{ json: { ok: false, error: 'alert_id required' } }];\n}\nconst TRIAGE = '/data/alerts-triage';\nfs.mkdirSync(TRIAGE, { recursive: true });\nconst now = new Date().toISOString();\nconst row = {\n  alert_id,\n  status: 'closed',\n  closed_at: now,\n  owner,\n  opened_at: null,\n  message: 'Closed via LAB - Close Alert webhook'\n};\nconst file = path.join(TRIAGE, `close-${alert_id}-${Date.now()}.json`);\nfs.writeFileSync(file, JSON.stringify(row));\nreturn [{ json: { ok: true, file, ...row } }];\n"
+      },
+      "id": "code",
+      "name": "Write Closed Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "resp",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Close": {
+      "main": [
+        [
+          {
+            "node": "Write Closed Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Closed Event": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "name": "lab-soc"
+    }
+  ],
+  "id": "c9f1c8d3911e0c87",
+  "versionId": "52148cf685b9dae5"
+}

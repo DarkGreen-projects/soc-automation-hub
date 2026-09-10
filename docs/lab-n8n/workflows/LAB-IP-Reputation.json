@@ -1,0 +1,119 @@
+{
+  "name": "LAB - IP Reputation",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "ip"
+            }
+          ]
+        }
+      },
+      "id": "t1",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=http://ip-api.com/json/{{ $json.ip }}?fields=status,message,country,countryCode,city,isp,org,query",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http_geo",
+      "name": "ip-api Geo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -360,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ip=$('When Executed by Another Workflow').item.json.ip; return [{json:{ip, geo:$json}}];"
+      },
+      "id": "merge",
+      "name": "Merge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ip = ($json.ip || $json.query?.ip || '').toString().trim();\nconst geo = $json.geo || {};\nconst stub = {\n  abuseipdb: { provider: 'stub (no API key)', abuseConfidenceScore: 0, totalReports: 0, usageType: 'unknown', note: 'Replace stub with AbuseIPDB when you have a free community key.' },\n  shodan: { provider: 'stub (no API key)', ports: [], hostnames: [], note: 'Replace stub with Shodan API when available.' },\n  virustotal: { provider: 'stub (no API key)', malicious: 0, suspicious: 0, undetected: 0, harmless: 0, note: 'Replace stub with VirusTotal API when available.' },\n  misp: { provider: 'stub (no API key)', events: [], html: 'No MISP instance in this lab demo.' }\n};\nconst country = geo.country || geo.countryCode || 'n/a';\nconst isp = geo.isp || geo.org || 'n/a';\nconst html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>IP Report ${ip}</title>\n<style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;background:#0f1419;color:#e7ecf3}\nh1{color:#5eead4}h2{color:#93c5fd;border-bottom:1px solid #334155;padding-bottom:.3rem}\n.card{background:#1e293b;border-radius:8px;padding:1rem;margin:1rem 0}a{color:#7dd3fc}.badge{display:inline-block;background:#334155;padding:.15rem .5rem;border-radius:4px;font-size:.85rem}</style></head>\n<body><h1>LAB IP Reputation</h1><p class=\"badge\">NUC SOC demo \u00b7 free/stub TI</p>\n<div class=\"card\"><h2>Indicator</h2><p><strong>${ip}</strong></p>\n<p>Geo (ip-api.com): ${country} \u00b7 ISP/Org: ${isp} \u00b7 City: ${geo.city||'n/a'}</p>\n<p>Status: ${geo.status||'unknown'} ${geo.message?('\u00b7 '+geo.message):''}</p></div>\n<div class=\"card\"><h2>AbuseIPDB</h2><p>${stub.abuseipdb.note}</p><p>Score: ${stub.abuseipdb.abuseConfidenceScore} \u00b7 Reports: ${stub.abuseipdb.totalReports}</p></div>\n<div class=\"card\"><h2>Shodan</h2><p>${stub.shodan.note}</p></div>\n<div class=\"card\"><h2>VirusTotal</h2><p>${stub.virustotal.note}</p></div>\n<div class=\"card\"><h2>MISP</h2><p>${stub.misp.html}</p></div>\n<footer><p>Pattern inspired by inthecyber Security Onion n8n workflows \u00b7 adapted for Splunk Free lab</p></footer>\n</body></html>`;\nreturn [{ json: { ip, geo, stub, html, type: 'ip' } }];\n"
+      },
+      "id": "html",
+      "name": "Build IP HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "ip-api Geo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ip-api Geo": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Build IP HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "name": "lab-soc"
+    }
+  ],
+  "id": "70eb03921996aa7d",
+  "versionId": "2d1223ba8fb2f5ec"
+}

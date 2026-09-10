@@ -1,0 +1,265 @@
+{
+  "name": "LAB - Splunk Warning Poller",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "sched",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -700,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Splunk Free disables remote REST login. Detection reads:\n// 1) /data/n8n-state/warning-plus.jsonl (host: splunk-warning-export.ps1)\n// 2) fallback /data/winlogs JSON (same files Splunk indexes)\nreturn [{ json: { ok: true } }];"
+      },
+      "id": "note",
+      "name": "Detection Note",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs = require('fs');\nconst crypto = require('crypto');\nconst path = require('path');\n\nconst STATE = '/data/n8n-state/seen-alerts.json';\nconst TRIAGE = '/data/alerts-triage';\nconst REPORTS = '/data/soc-reports';\nconst WINLOGS = '/data/winlogs';\nconst BRIDGE = '/data/n8n-state/warning-plus.jsonl';\n\nfor (const d of [path.dirname(STATE), TRIAGE, REPORTS]) {\n  try { fs.mkdirSync(d, { recursive: true }); } catch (e) {}\n}\n\nlet seen = {};\ntry { seen = JSON.parse(fs.readFileSync(STATE, 'utf8') || '{}'); } catch (e) { seen = {}; }\n\nconst warnLevels = new Set(['avviso','warning','errore','error','critico','critical']);\nconst events = [];\n\nfunction pushEvent(result) {\n  if (!result || typeof result !== 'object') return;\n  const level = (result.Level || result.level || '').toString();\n  if (!warnLevels.has(level.toLowerCase())) return;\n  events.push(result);\n}\n\nif (fs.existsSync(BRIDGE)) {\n  const text = fs.readFileSync(BRIDGE, 'utf8');\n  for (const line of text.split(/\\r?\\n/)) {\n    if (!line.trim()) continue;\n    try { pushEvent(JSON.parse(line)); } catch (e) {}\n  }\n}\n\nif (!events.length && fs.existsSync(WINLOGS)) {\n  const files = fs.readdirSync(WINLOGS).filter(f => f.endsWith('.json')).slice(-20);\n  for (const f of files) {\n    const text = fs.readFileSync(path.join(WINLOGS, f), 'utf8');\n    for (const line of text.split(/\\r?\\n/)) {\n      if (!line.trim()) continue;\n      try { pushEvent(JSON.parse(line)); } catch (e) {}\n    }\n  }\n}\n\nconst items = [];\nfor (const result of events.slice(0, 30)) {\n  const id = result.Id ?? result.id ?? 'na';\n  const timeCreated = result.TimeCreated || result.time_created || result._time || '';\n  const logName = result.LogName || result.log_name || 'Unknown';\n  const level = result.Level || result.level || '';\n  const message = (result.Message || result.message || '').toString();\n  const alertId = crypto.createHash('sha1').update(`${id}|${timeCreated}|${logName}`).digest('hex').slice(0, 16);\n  const alert_id = `auto-${alertId}`;\n  if (seen[alert_id]) continue;\n  seen[alert_id] = new Date().toISOString();\n\n  const ips = [...message.matchAll(/\\b(?:(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\b/g)].map(m => m[0]);\n  const cves = [...message.matchAll(/CVE-\\d{4}-\\d{4,}/gi)].map(m => m[0].toUpperCase());\n  const ip = ips.find(x => !x.startsWith('127.') && !x.startsWith('0.')) || ips[0] || '8.8.8.8';\n  const cve = cves[0] || '';\n\n  const triage = {\n    alert_id,\n    status: 'open',\n    source_id: id,\n    log_name: logName,\n    level,\n    time_created: timeCreated,\n    message: message.slice(0, 2000),\n    opened_at: new Date().toISOString(),\n    closed_at: null,\n    owner: null,\n    iocs: { ip, cve, ips: ips.slice(0, 5) },\n    detection_source: 'winlogs_or_splunk_bridge'\n  };\n  fs.writeFileSync(path.join(TRIAGE, `open-${alert_id}.json`), JSON.stringify(triage));\n  items.push({ json: triage });\n}\n\nfs.writeFileSync(STATE, JSON.stringify(seen, null, 2));\nif (!items.length) {\n  return [{ json: { skipped: true, reason: 'no_new_alerts', scanned: events.length } }];\n}\nreturn items;\n"
+      },
+      "id": "proc",
+      "name": "Process New Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.skipped }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "ifnew",
+      "name": "Has New Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=http://127.0.0.1:5678/webhook/lab-reputation?ip={{ $json.iocs.ip || '8.8.8.8' }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "enrich",
+      "name": "Enrich IP via Dispatcher",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst a = $('Process New Alerts').item.json;\nconst enrich = $json.data || $json;\nconst prompt = `Sei un analista SOC. Riassumi in italiano in 4 bullet max questo alert Windows e suggerisci next steps.\\nLog: ${a.log_name} Id=${a.source_id} Level=${a.level}\\nMsg: ${(a.message||'').slice(0,800)}`;\nreturn [{ json: { ...a, enrich_html: typeof enrich === 'string' ? enrich : '', prompt } }];\n"
+      },
+      "id": "ai_prep",
+      "name": "Prep Ollama Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.OLLAMA_URL || 'http://lab_ollama:11434') + '/api/generate' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $env.OLLAMA_MODEL || 'llama3.2:1b', prompt: $json.prompt, stream: false }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ollama",
+      "name": "Ollama Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst prep = $('Prep Ollama Prompt').item.json;\nconst ai = $json.response || $json.error || 'AI summary skipped (Ollama offline or model missing).';\nreturn [{ json: { html: prep.enrich_html, ai_summary: ai, alert_id: prep.alert_id } }];\n"
+      },
+      "id": "merge_ai",
+      "name": "Merge AI + Enrich",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fs = require('fs');\nconst path = require('path');\nconst alert = $('Process New Alerts').item.json;\nif (alert.skipped) {\n  return [{ json: { skipped: true } }];\n}\nconst enrichHtml = $json.html || ($json.data || '');\nconst ai = $json.ai_summary || $json.response || 'AI summary skipped (Ollama offline or model missing).';\nconst report = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>SOC Report ${alert.alert_id}</title>\n<style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:960px;margin:2rem auto;padding:0 1rem;background:#0f1419;color:#e7ecf3}\nh1{color:#5eead4}.card{background:#1e293b;border-radius:8px;padding:1rem;margin:1rem 0}pre{white-space:pre-wrap}</style></head>\n<body>\n<h1>SOC Automation Report</h1>\n<div class=\"card\"><h2>Alert</h2>\n<p><strong>${alert.alert_id}</strong> \u00b7 ${alert.log_name} \u00b7 Id ${alert.source_id} \u00b7 ${alert.level}</p>\n<pre>${(alert.message||'').slice(0,1500)}</pre></div>\n<div class=\"card\"><h2>AI triage (Ollama)</h2><pre>${typeof ai === 'string' ? ai : JSON.stringify(ai)}</pre></div>\n<div class=\"card\"><h2>Enrichment</h2>${enrichHtml || '<p>No IOC enrichment for this event.</p>'}</div>\n</body></html>`;\nconst out = path.join('/data/soc-reports', `${alert.alert_id}.html`);\nfs.writeFileSync(out, report);\nreturn [{ json: { ...alert, report_path: out, ai_summary: ai } }];\n"
+      },
+      "id": "report",
+      "name": "Write SOC Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Detection Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detection Note": {
+      "main": [
+        [
+          {
+            "node": "Process New Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process New Alerts": {
+      "main": [
+        [
+          {
+            "node": "Has New Alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has New Alert?": {
+      "main": [
+        [
+          {
+            "node": "Enrich IP via Dispatcher",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Enrich IP via Dispatcher": {
+      "main": [
+        [
+          {
+            "node": "Prep Ollama Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Ollama Prompt": {
+      "main": [
+        [
+          {
+            "node": "Ollama Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge AI + Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge AI + Enrich": {
+      "main": [
+        [
+          {
+            "node": "Write SOC Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "name": "lab-soc"
+    }
+  ],
+  "id": "71ca4473c6beefd8",
+  "versionId": "9177bcc50d4c860b"
+}

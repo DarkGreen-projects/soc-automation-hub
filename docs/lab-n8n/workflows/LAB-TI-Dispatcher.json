@@ -1,0 +1,494 @@
+{
+  "name": "LAB - TI Dispatcher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "lab-reputation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        300
+      ],
+      "webhookId": "lab-reputation"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst q = $json.query || {};\nconst body = $json.body || {};\nconst ip = (q.ip || body.ip || '').toString().trim();\nconst domain = (q.domain || body.domain || '').toString().trim();\nconst hash = (q.hash || body.hash || '').toString().trim();\nconst cve = (q.cve || body.cve || '').toString().trim();\nlet type = 'unknown';\nif (ip) type = 'ip';\nelse if (domain) type = 'domain';\nelse if (hash) type = 'hash';\nelse if (cve) type = 'cve';\nreturn [{ json: { type, ip, domain, hash, cve, query: q } }];\n"
+      },
+      "id": "parse1",
+      "name": "Parse Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "ip",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "domain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "hash",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "cve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sw1",
+      "name": "Switch Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=http://ip-api.com/json/{{ $json.ip }}?fields=status,message,country,countryCode,city,isp,org,query",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http_geo",
+      "name": "ip-api Geo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev=$('Parse Query').item.json; return [{json:{...prev, geo:$json}}];"
+      },
+      "id": "merge_ip",
+      "name": "Merge IP Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ip = ($json.ip || $json.query?.ip || '').toString().trim();\nconst geo = $json.geo || {};\nconst stub = {\n  abuseipdb: { provider: 'stub (no API key)', abuseConfidenceScore: 0, totalReports: 0, usageType: 'unknown', note: 'Replace stub with AbuseIPDB when you have a free community key.' },\n  shodan: { provider: 'stub (no API key)', ports: [], hostnames: [], note: 'Replace stub with Shodan API when available.' },\n  virustotal: { provider: 'stub (no API key)', malicious: 0, suspicious: 0, undetected: 0, harmless: 0, note: 'Replace stub with VirusTotal API when available.' },\n  misp: { provider: 'stub (no API key)', events: [], html: 'No MISP instance in this lab demo.' }\n};\nconst country = geo.country || geo.countryCode || 'n/a';\nconst isp = geo.isp || geo.org || 'n/a';\nconst html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>IP Report ${ip}</title>\n<style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;background:#0f1419;color:#e7ecf3}\nh1{color:#5eead4}h2{color:#93c5fd;border-bottom:1px solid #334155;padding-bottom:.3rem}\n.card{background:#1e293b;border-radius:8px;padding:1rem;margin:1rem 0}a{color:#7dd3fc}.badge{display:inline-block;background:#334155;padding:.15rem .5rem;border-radius:4px;font-size:.85rem}</style></head>\n<body><h1>LAB IP Reputation</h1><p class=\"badge\">NUC SOC demo \u00b7 free/stub TI</p>\n<div class=\"card\"><h2>Indicator</h2><p><strong>${ip}</strong></p>\n<p>Geo (ip-api.com): ${country} \u00b7 ISP/Org: ${isp} \u00b7 City: ${geo.city||'n/a'}</p>\n<p>Status: ${geo.status||'unknown'} ${geo.message?('\u00b7 '+geo.message):''}</p></div>\n<div class=\"card\"><h2>AbuseIPDB</h2><p>${stub.abuseipdb.note}</p><p>Score: ${stub.abuseipdb.abuseConfidenceScore} \u00b7 Reports: ${stub.abuseipdb.totalReports}</p></div>\n<div class=\"card\"><h2>Shodan</h2><p>${stub.shodan.note}</p></div>\n<div class=\"card\"><h2>VirusTotal</h2><p>${stub.virustotal.note}</p></div>\n<div class=\"card\"><h2>MISP</h2><p>${stub.misp.html}</p></div>\n<footer><p>Pattern inspired by inthecyber Security Onion n8n workflows \u00b7 adapted for Splunk Free lab</p></footer>\n</body></html>`;\nreturn [{ json: { ip, geo, stub, html, type: 'ip' } }];\n"
+      },
+      "id": "ip_html",
+      "name": "Build IP HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://dns.google/resolve?name={{ $json.domain }}&type=A",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http_dns",
+      "name": "Google DNS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev=$('Parse Query').item.json; return [{json:{...prev, dns:$json}}];"
+      },
+      "id": "merge_dom",
+      "name": "Merge Domain Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst domain = ($json.domain || '').toString().trim().toLowerCase();\nconst dns = $json.dns || {};\nconst answers = (dns.Answer || []).map(a => `${a.type}:${a.data}`).join(', ') || 'none';\nconst stub = {\n  virustotal: { provider: 'stub (no API key)', malicious: 0, note: 'Stub \u2014 add VT API later.' },\n  urlhaus: { provider: 'stub (no API key)', note: 'Stub \u2014 optional abuse.ch Auth-Key later.' }\n};\nconst html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Domain ${domain}</title>\n<style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;background:#0f1419;color:#e7ecf3}\nh1{color:#5eead4}h2{color:#93c5fd}.card{background:#1e293b;border-radius:8px;padding:1rem;margin:1rem 0}</style></head>\n<body><h1>LAB Domain Reputation</h1>\n<div class=\"card\"><h2>Indicator</h2><p><strong>${domain}</strong></p>\n<p>DNS (Google JSON): ${answers}</p><p>Status: ${dns.Status}</p></div>\n<div class=\"card\"><h2>VirusTotal / URLhaus</h2><p>${stub.virustotal.note}</p><p>${stub.urlhaus.note}</p></div>\n</body></html>`;\nreturn [{ json: { domain, dns, stub, html, type: 'domain' } }];\n"
+      },
+      "id": "dom_html",
+      "name": "Build Domain HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst hash = ($json.hash || '').toString().trim().toLowerCase();\nlet kind = 'unknown';\nif (/^[a-f0-9]{32}$/.test(hash)) kind = 'md5';\nelse if (/^[a-f0-9]{40}$/.test(hash)) kind = 'sha1';\nelse if (/^[a-f0-9]{64}$/.test(hash)) kind = 'sha256';\nconst valid = kind !== 'unknown';\nconst stub = { virustotal: { provider: 'stub (no API key)', malicious: 0, suspicious: 0, note: 'Stub VT \u2014 no paid/free key required for this demo.' } };\nconst html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Hash ${hash}</title>\n<style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;background:#0f1419;color:#e7ecf3}\nh1{color:#5eead4}.card{background:#1e293b;border-radius:8px;padding:1rem;margin:1rem 0}</style></head>\n<body><h1>LAB Hash Reputation</h1>\n<div class=\"card\"><p><strong>${hash}</strong></p><p>Type: ${kind} \u00b7 Valid format: ${valid}</p>\n<p>${stub.virustotal.note}</p><p>Demo score malicious=${stub.virustotal.malicious}</p></div>\n</body></html>`;\nreturn [{ json: { hash, kind, valid, stub, html, type: 'hash' } }];\n"
+      },
+      "id": "hash_html",
+      "name": "Build Hash HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://cve.circl.lu/api/cve/{{ $json.cve }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http_cve",
+      "name": "CIRCL CVE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev=$('Parse Query').item.json; return [{json:{...prev, circl:$json}}];"
+      },
+      "id": "merge_cve",
+      "name": "Merge CVE Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst cve = ($json.cve || '').toString().trim().toUpperCase();\nconst circl = $json.circl || {};\nconst summary = circl.summary || circl.descriptions?.[0]?.value || circl.message || 'No CIRCL data (offline or unknown CVE)';\nconst cvss = circl.cvss || circl.metrics?.cvssMetricV31?.[0]?.cvssData?.baseScore || 'n/a';\nconst html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>${cve}</title>\n<style>body{font-family:Segoe UI,system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;background:#0f1419;color:#e7ecf3}\nh1{color:#5eead4}.card{background:#1e293b;border-radius:8px;padding:1rem;margin:1rem 0}</style></head>\n<body><h1>LAB CVE Info</h1>\n<div class=\"card\"><p><strong>${cve}</strong></p><p>CVSS: ${cvss}</p><p>${summary}</p>\n<p>Source: cve.circl.lu (no API key) \u00b7 fallback stub if unreachable</p></div>\n</body></html>`;\nreturn [{ json: { cve, circl, summary, cvss, html, type: 'cve' } }];\n"
+      },
+      "id": "cve_html",
+      "name": "Build CVE HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst html = `<!DOCTYPE html><html><body style=\"font-family:sans-serif;background:#0f1419;color:#e7ecf3;padding:2rem\">\n<h1>LAB TI Dispatcher</h1>\n<p>Provide one query param: <code>?ip=</code> <code>?domain=</code> <code>?hash=</code> <code>?cve=</code></p>\n<p>Example: <a style=\"color:#7dd3fc\" href=\"/webhook/lab-reputation?ip=8.8.8.8\">/webhook/lab-reputation?ip=8.8.8.8</a></p>\n</body></html>`;\nreturn [{ json: { html, type: 'unknown' } }];\n"
+      },
+      "id": "unk_html",
+      "name": "Unknown Help",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond",
+      "name": "Respond HTML",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Query": {
+      "main": [
+        [
+          {
+            "node": "Switch Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Type": {
+      "main": [
+        [
+          {
+            "node": "ip-api Geo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google DNS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Hash HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CIRCL CVE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown Help",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ip-api Geo": {
+      "main": [
+        [
+          {
+            "node": "Merge IP Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge IP Context": {
+      "main": [
+        [
+          {
+            "node": "Build IP HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build IP HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google DNS": {
+      "main": [
+        [
+          {
+            "node": "Merge Domain Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Domain Context": {
+      "main": [
+        [
+          {
+            "node": "Build Domain HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Domain HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Hash HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CIRCL CVE": {
+      "main": [
+        [
+          {
+            "node": "Merge CVE Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge CVE Context": {
+      "main": [
+        [
+          {
+            "node": "Build CVE HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CVE HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unknown Help": {
+      "main": [
+        [
+          {
+            "node": "Respond HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "name": "lab-soc"
+    }
+  ],
+  "id": "678cfb354d6de234",
+  "versionId": "f286e3192834cadc"
+}

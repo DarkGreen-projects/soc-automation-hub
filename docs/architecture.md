@@ -58,6 +58,12 @@ flowchart TB
 
 Chiavi VT in `data/` accanto all'eseguibile → `vt_lookup` Rust → checkpoint JSON per CSV VT e Bulk IOC.
 
+## Lab SOAR demo (NUC — fuori dalla demo web)
+
+Pipeline documentata in [`docs/lab-n8n/`](lab-n8n/README.md): Windows logs → Splunk Free → n8n schedule (Warning+ via file bridge / winlogs, perché Free blocca REST remoto) → `alerts_triage` open/closed → TI Dispatcher (ip-api / DNS / CIRCL + stub VT/Shodan/MISP) → report HTML + Ollama → webhook close.
+
+Motivo n8n: su Splunk Free non ci sono alert programmate native né REST auth remoto; l’orchestration esterna è il pattern corretto SIEM/SOAR.
+
 ## CI/CD
 
 - **pages.yml** — build Vite `base: /soc-automation-hub/` → GitHub Pages
