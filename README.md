@@ -16,6 +16,12 @@ Parte del portfolio [DarkGreen Projects](https://github.com/DarkGreen-projects).
 | **CSV Pivot** | Export CSV SIEM → top valori, bucket temporali, query pivot |
 | **Bulk IOC** | Lista IP/hash/domain/URL → classificazione bulk (demo simulata) |
 
+### Lab SOAR demo (NUC)
+
+Repo dedicato (vetrina IT): **[soc-n8n-splunk-lab](https://github.com/DarkGreen-projects/soc-n8n-splunk-lab)** — pipeline **Splunk Free + n8n + Ollama** (poll Warning+, triage open/closed, reputation HTML free/stub, chiusura webhook).
+
+Documentazione in-hub: [docs/lab-n8n/README.md](docs/lab-n8n/README.md) · workflow JSON anche in [`docs/lab-n8n/workflows/`](docs/lab-n8n/workflows/).
+
 | Modalità | URL | Cosa fa |
 |----------|-----|---------|
 | **Demo web** | [Pages](https://darkgreen-projects.github.io/soc-automation-hub/) | Tutti e 5 i moduli in browser |
@@ -44,6 +50,7 @@ soc-automation-hub/
 ├── tools/csv-vt-scanner/   # Hub demo web + app desktop Tauri
 ├── examples/               # CSV/JSON/TXT di esempio (dati fittizi)
 ├── docs/architecture.md
+├── docs/lab-n8n/           # Demo SOAR: Splunk Free + n8n + Ollama
 └── docs/wiki/              # Documentazione moduli in-repo
 ```
 
